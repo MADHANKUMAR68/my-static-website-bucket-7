@@ -1,0 +1,4 @@
+.minikube/
+node_modules/
+*.zip
+kubectl
