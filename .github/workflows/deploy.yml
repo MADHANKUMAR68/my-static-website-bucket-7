@@ -1,35 +1,39 @@
-name: Deploy Static Website to S3
+name: Deploy Static Website to S3 + CloudFront
 
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main
 
 jobs:
-deploy:
-runs-on: ubuntu-latest
+  deploy:
+    name: Deploy to S3 & CloudFront
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v4
+    steps:
+      # ✅ Step 1: Checkout Code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Configure AWS Credentials
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: ${{ secrets.AWS_REGION }}
+      # ✅ Step 2: Configure AWS Credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-  - name: Sync Files to S3
-    run: |
-      aws s3 sync . s3://${{ secrets.S3_BUCKET }} \
-        --delete \
-        --exclude ".git/*" \
-        --exclude ".github/*"
+      # ✅ Step 3: Sync Files to S3
+      - name: Deploy to S3
+        run: |
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*"
 
-  - name: Create CloudFront Invalidation
-    run: |
-      aws cloudfront create-invalidation \
-        --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-        --paths "/*"
+      # ✅ Step 4: Invalidate CloudFront Cache
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
